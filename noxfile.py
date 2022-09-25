@@ -132,3 +132,37 @@ def _get_trunk_branch_name(
     ).rstrip()
 
     return default_branch
+
+
+@nox.session
+def fork(session: Session) -> None:
+    """Fork Dash user contributed docsets and create new branch."""
+    user_contributed_repo_owner = "Kapeli"
+    user_contributed_repo = "Dash-User-Contributions"
+    session.run(
+        "gh",
+        "repo",
+        "fork",
+        "--clone",
+        f"{user_contributed_repo_owner}/{user_contributed_repo}",
+        external=True,
+    )
+    library_version = _get_library_version(session)
+
+    with session.chdir(user_contributed_repo):
+        session.run(
+            "git",
+            "switch",
+            "--create",
+            f"{LIBRARY_NAME}-{library_version}",
+            external=True,
+        )
+        session.run("git", "fetch", "upstream", external=True)
+        trunk_branch_name = _get_trunk_branch_name(
+            session,
+            repository_owner=user_contributed_repo_owner,
+            repository_name=user_contributed_repo,
+        )
+        session.run(
+            "git", "reset", "--hard", f"upstream/{trunk_branch_name}", external=True
+        )
