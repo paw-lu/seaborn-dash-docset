@@ -45,3 +45,17 @@ def docs(session: Session) -> None:
         session.run(
             "make", "notebooks", "html", external=True, env={"NB_KERNEL": kernel_name}
         )
+
+
+@nox.session
+def icon(session: Session) -> None:
+    """Create dash icon."""
+    for size, file_name in (("16x16", "icon.png"), ("32x32", "icon@2x.png")):
+        session.run(
+            "magick",
+            "seaborn/doc/_build/html/_static/logo-mark-lightbg.png",
+            "-resize",
+            size,
+            file_name,
+            external=True,
+        )
