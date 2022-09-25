@@ -1,4 +1,6 @@
 """Nox sessions."""
+import shutil
+
 import nox
 from nox.sessions import Session
 
@@ -59,3 +61,20 @@ def icon(session: Session) -> None:
             file_name,
             external=True,
         )
+
+
+@nox.session
+def dash(session: Session) -> None:
+    """Create dash docset."""
+    session.install("doc2dash")
+    session.run(
+        "doc2dash",
+        "--index-page=index.html",
+        "--icon=icon.png",
+        "--online-redirect-url=https://seaborn.pydata.org/",
+        f"{REPOSITORY_NAME}/doc/_build/html",
+        *session.posargs,
+    )
+    # As of 3.0.0, doc2dash does not support 2x icons
+    # See https://github.com/hynek/doc2dash/issues/130
+    shutil.copy("icon@2x.png", f"{REPOSITORY_NAME}.docset/")
