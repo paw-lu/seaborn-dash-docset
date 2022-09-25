@@ -115,3 +115,20 @@ def _get_library_version(session: Session) -> str:
     library_version = library_install_report["metadata"]["version"]
 
     return library_version
+
+
+def _get_trunk_branch_name(
+    session: Session, repository_owner: str, repository_name: str
+) -> str:
+    """Get name of trunk branch."""
+    default_branch = session.run(
+        "gh",
+        "api",
+        "--header=Accept: application/vnd.github+json",
+        f"/repos/{repository_owner}/{repository_name}",
+        "--jq=.default_branch",
+        external=True,
+        silent=True,
+    ).rstrip()
+
+    return default_branch
