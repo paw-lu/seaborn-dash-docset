@@ -1,5 +1,6 @@
 """Nox sessions."""
 import json
+import pathlib
 import shutil
 import tempfile
 
@@ -166,3 +167,11 @@ def fork(session: Session) -> None:
         session.run(
             "git", "reset", "--hard", f"upstream/{trunk_branch_name}", external=True
         )
+
+
+@nox.session(name="create-directory")
+def create_directory(session: Session) -> None:
+    """If directory for docset does not exist, create it."""
+    with session.chdir("Dash-User-Contributions"):
+        docset_path = pathlib.Path("docsets", LIBRARY_NAME)
+        docset_path.mkdir(exist_ok=True)
