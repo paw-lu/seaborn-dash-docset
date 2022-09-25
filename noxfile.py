@@ -1,5 +1,6 @@
 """Nox sessions."""
 import json
+import os
 import pathlib
 import shutil
 import tempfile
@@ -175,3 +176,23 @@ def create_directory(session: Session) -> None:
     with session.chdir("Dash-User-Contributions"):
         docset_path = pathlib.Path("docsets", LIBRARY_NAME)
         docset_path.mkdir(exist_ok=True)
+
+
+@nox.session(name="copy-contents")
+def copy_contents(session: Session) -> None:
+    """Copy build docset contents into Dash User Contributions repo."""
+    build_path = pathlib.Path(f"{LIBRARY_NAME}.docset")
+    dash_path = pathlib.Path("Dash-User-Contributions", "docsets", LIBRARY_NAME)
+
+    for icon_path in build_path.glob("icon*.png"):
+        shutil.copy(icon_path, dash_path)
+
+    zipped_docset_path = os.fsdecode((dash_path / LIBRARY_NAME).with_suffix(".tgz"))
+    session.run(
+        "tar",
+        "--exclude=.DS_Store",
+        "-cvzf",
+        zipped_docset_path,
+        f"{LIBRARY_NAME}.docset",
+        external=True,
+    )
