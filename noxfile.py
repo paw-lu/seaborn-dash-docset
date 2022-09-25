@@ -4,6 +4,7 @@ import os
 import pathlib
 import shutil
 import tempfile
+import textwrap
 
 import nox
 from nox.sessions import Session
@@ -196,3 +197,63 @@ def copy_contents(session: Session) -> None:
         f"{LIBRARY_NAME}.docset",
         external=True,
     )
+
+
+@nox.session(name="fill-forms")
+def fill_forms(session: Session) -> None:
+    """Fill forms for Dash User Contribution docs."""
+    library_version = _get_library_version(session)
+    docset_author = "Paulo S. Costa"
+    docset_author_github_user = "paw-lu"
+    docset_author_url = f"https://github.com/{docset_author_github_user}"
+    docset_config = {
+        "name": LIBRARY_NAME,
+        "version": library_version,
+        "archive": f"{LIBRARY_NAME}.tgz",
+        "author": {
+            "name": docset_author,
+            "url": docset_author_url,
+        },
+        "aliases": ["python", "graph", "matplotlib", "visualization", "data"],
+    }
+    dash_path = pathlib.Path("Dash-User-Contributions", "docsets", LIBRARY_NAME)
+    docset_config_path = (dash_path / "docset").with_suffix(".json")
+    json.dump(docset_config, docset_config_path.open("w"), indent=2)
+    repo_name = "seaborn-dash2doc"
+    repo_path = f"{docset_author_github_user}/{repo_name}"
+    readme = textwrap.dedent(
+        f"""\
+        # {LIBRARY_NAME}
+
+        ## Who am I
+
+        [{docset_author}]({docset_author_url})
+
+        ## How to generate docset
+
+        This docset is automatically generated via [{repo_path}](https://github.com/{repo_path}).
+
+        ### Requirements
+
+        - [git](https://git-scm.com/)
+        - [GitHub CLI (gh)](https://cli.github.com/)
+        - [GNU Make](https://www.gnu.org/software/make/)
+        - [GNU Tar](https://www.gnu.org/software/tar/)
+        - [ImageMagick](https://imagemagick.org/index.php)
+        - [Nox](https://nox.thea.codes/en/stable/)
+        - [Python 3](https://www.python.org/)
+
+        ### Build directions
+
+        To build the docs, run:
+
+        ```console
+        $ gh repo clone {repo_path}
+
+        $ cd {repo_name}
+
+        $ nox --sessions clone docs icon dash
+        ```
+    """
+    )
+    (dash_path / "README").with_suffix(".md").write_text(readme)
