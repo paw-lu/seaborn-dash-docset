@@ -1,5 +1,7 @@
 """Nox sessions."""
+import json
 import shutil
+import tempfile
 
 import nox
 from nox.sessions import Session
@@ -78,3 +80,34 @@ def dash(session: Session) -> None:
     # As of 3.0.0, doc2dash does not support 2x icons
     # See https://github.com/hynek/doc2dash/issues/130
     shutil.copy("icon@2x.png", f"{REPOSITORY_NAME}.docset/")
+
+
+def _get_library_version(session: Session) -> str:
+    """Get the version for the library."""
+    with tempfile.NamedTemporaryFile() as dependency_report_file:
+        session.run(
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--dry-run",
+            "--no-deps",
+            "--ignore-installed",
+            "--report",
+            dependency_report_file.name,
+            "--requirement",
+            "doc-requirements.txt",
+        )
+        dependency_report = json.load(dependency_report_file.file)
+
+    install_report = dependency_report["install"]
+
+    if 1 < len(install_report):
+        raise ValueError(
+            "Multiple dependencies detected in requirements file. Expected one."
+        )
+
+    library_install_report, *_ = install_report
+    library_version = library_install_report["metadata"]["version"]
+
+    return library_version
