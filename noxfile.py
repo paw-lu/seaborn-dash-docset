@@ -28,3 +28,20 @@ def clone(session: Session) -> None:
             raise ValueError("Found no 'Latest' tagged release.")
 
         session.run("git", "checkout", f"tags/{release_tag}", "-b", release_name)
+
+
+@nox.session
+def docs(session: Session) -> None:
+    """Build seaborn's docs."""
+    with session.chdir(REPOSITORY_NAME):
+        session.install(".[stats]")
+
+    with session.chdir(f"{REPOSITORY_NAME}/doc"):
+        kernel_name = "seaborn_docs"
+        session.install("--requirement", "requirements.txt")
+        session.run(
+            "python", "-m", "ipykernel", "install", "--user", f"--name={kernel_name}"
+        )
+        session.run(
+            "make", "notebooks", "html", external=True, env={"NB_KERNEL": kernel_name}
+        )
