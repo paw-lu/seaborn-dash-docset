@@ -8,6 +8,7 @@ from nox.sessions import Session
 
 nox.needs_version = ">= 2021.6.6"
 REPOSITORY_NAME = "seaborn"
+LIBRARY_NAME = "seaborn"
 
 
 @nox.session
@@ -41,7 +42,7 @@ def docs(session: Session) -> None:
         session.install(".[stats]")
 
     with session.chdir(f"{REPOSITORY_NAME}/doc"):
-        kernel_name = "seaborn_docs"
+        kernel_name = f"{LIBRARY_NAME}_docs"
         session.install("--requirement", "requirements.txt")
         session.run(
             "python", "-m", "ipykernel", "install", "--user", f"--name={kernel_name}"
@@ -79,7 +80,7 @@ def dash(session: Session) -> None:
     )
     # As of 3.0.0, doc2dash does not support 2x icons
     # See https://github.com/hynek/doc2dash/issues/130
-    shutil.copy("icon@2x.png", f"{REPOSITORY_NAME}.docset/")
+    shutil.copy("icon@2x.png", f"{LIBRARY_NAME}.docset/")
 
 
 def _get_library_version(session: Session) -> str:
