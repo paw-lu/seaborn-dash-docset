@@ -13,26 +13,29 @@ LIBRARY_NAME = "seaborn"
 
 @nox.session
 def clone(session: Session) -> None:
-    """Clone the repository."""
-    github_account = "mwaskom"
-    repository_address = f"{github_account}/{REPOSITORY_NAME}"
-    session.run("gh", "repo" "clone", repository_address)
+    """Clone the repository and checkout latest release."""
+    repository_owner = "mwaskom"
+    repository_address = f"{repository_owner}/{REPOSITORY_NAME}"
+    session.run("gh", "repo", "clone", repository_address, external=True)
 
     with session.chdir(REPOSITORY_NAME):
-        releases_output = session.run(
-            "gh", "release", "list", external=True, silent=True
+        latest_release_tag_name = session.run(
+            "gh",
+            "api",
+            "--header=Accept: application/vnd.github+json",
+            "/repos/mwaskom/seaborn/releases/latest",
+            "--jq=.tag_name",
+            external=True,
+            silent=True,
+        ).rstrip()
+        session.run(
+            "git",
+            "checkout",
+            f"tags/{latest_release_tag_name}",
+            "-b",
+            latest_release_tag_name,
+            external=True,
         )
-
-        for releases in releases_output.splitlines():
-            release_name, release, release_tag, *_ = releases.split()
-
-            if release == "Latest":
-                break
-
-        else:
-            raise ValueError("Found no 'Latest' tagged release.")
-
-        session.run("git", "checkout", f"tags/{release_tag}", "-b", release_name)
 
 
 @nox.session
