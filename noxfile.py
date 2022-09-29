@@ -12,6 +12,7 @@ from nox.sessions import Session
 nox.needs_version = ">= 2021.6.6"
 REPOSITORY_NAME = "seaborn"
 LIBRARY_NAME = "seaborn"
+DASH_DOCSET_PATH = pathlib.Path("Dash-User-Contributions", "docsets", LIBRARY_NAME)
 
 
 @nox.session
@@ -183,12 +184,13 @@ def create_directory(session: Session) -> None:
 def copy_contents(session: Session) -> None:
     """Copy build docset contents into Dash User Contributions repo."""
     build_path = pathlib.Path(f"{LIBRARY_NAME}.docset")
-    dash_path = pathlib.Path("Dash-User-Contributions", "docsets", LIBRARY_NAME)
 
     for icon_path in build_path.glob("icon*.png"):
-        shutil.copy(icon_path, dash_path)
+        shutil.copy(icon_path, DASH_DOCSET_PATH)
 
-    zipped_docset_path = os.fsdecode((dash_path / LIBRARY_NAME).with_suffix(".tgz"))
+    zipped_docset_path = os.fsdecode(
+        (DASH_DOCSET_PATH / LIBRARY_NAME).with_suffix(".tgz")
+    )
     session.run(
         "tar",
         "--exclude=.DS_Store",
