@@ -180,6 +180,15 @@ def create_directory(session: Session) -> None:
         docset_path.mkdir(exist_ok=True)
 
 
+@nox.session(name="remove-old")
+def remove_old(session: Session) -> None:
+    """Remove old docsets."""
+    shutil.rmtree(DASH_DOCSET_PATH / "versions")
+
+    for old_zipped_docset in DASH_DOCSET_PATH.glob("*.tgz*"):
+        old_zipped_docset.unlink()
+
+
 @nox.session(name="copy-contents")
 def copy_contents(session: Session) -> None:
     """Copy build docset contents into Dash User Contributions repo."""
