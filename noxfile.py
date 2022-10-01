@@ -268,3 +268,18 @@ def fill_forms(session: Session) -> None:
     """
     )
     (dash_path / "README").with_suffix(".md").write_text(readme)
+
+
+@nox.session
+def commit(session: Session) -> None:
+    """Commit changes to Dash User Contributed Docs."""
+    library_version = _get_library_version(session)
+
+    with session.chdir(DASH_DOCSET_PATH):
+        session.run("git", "add", ".", external=True)
+        session.run(
+            "git",
+            "commit",
+            f"--message=Add docset for {LIBRARY_NAME} {library_version}.",
+            external=True,
+        )
