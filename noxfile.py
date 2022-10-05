@@ -291,3 +291,10 @@ def commit(session: Session) -> None:
             f"--message=Add docset for {LIBRARY_NAME} {library_version}.",
             external=True,
         )
+
+
+@nox.session
+def push(session: Session) -> None:
+    """Push the branch to the user's remote."""
+    branch_name = _make_branch_name(session)
+    session.run("git", "push", "--set-upstream", "origin", branch_name)
