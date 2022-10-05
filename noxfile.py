@@ -10,19 +10,21 @@ import nox
 from nox.sessions import Session
 
 nox.needs_version = ">= 2021.6.6"
-REPOSITORY_NAME = "seaborn"
+LIBRARY_REPOSITORY = "seaborn"
 LIBRARY_NAME = "seaborn"
-DASH_DOCSET_PATH = pathlib.Path("Dash-User-Contributions", "docsets", LIBRARY_NAME)
+UPSTREAM_REPOSITORY_OWNER = "Kapeli"
+DOCSET_REPOSITORY = "Dash-User-Contributions"
+DASH_DOCSET_PATH = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
 
 
 @nox.session
 def clone(session: Session) -> None:
     """Clone the repository and checkout latest release."""
     repository_owner = "mwaskom"
-    repository_address = f"{repository_owner}/{REPOSITORY_NAME}"
+    repository_address = f"{repository_owner}/{LIBRARY_REPOSITORY}"
     session.run("gh", "repo", "clone", repository_address, external=True)
 
-    with session.chdir(REPOSITORY_NAME):
+    with session.chdir(LIBRARY_REPOSITORY):
         latest_release_tag_name = session.run(
             "gh",
             "api",
@@ -45,10 +47,10 @@ def clone(session: Session) -> None:
 @nox.session
 def docs(session: Session) -> None:
     """Build seaborn's docs."""
-    with session.chdir(REPOSITORY_NAME):
+    with session.chdir(LIBRARY_REPOSITORY):
         session.install(".[stats]")
 
-    with session.chdir(f"{REPOSITORY_NAME}/doc"):
+    with session.chdir(f"{LIBRARY_REPOSITORY}/doc"):
         kernel_name = f"{LIBRARY_NAME}_docs"
         session.install("--requirement", "requirements.txt")
         session.run(
@@ -82,7 +84,7 @@ def dash(session: Session) -> None:
         "--index-page=index.html",
         "--icon=icon.png",
         "--online-redirect-url=https://seaborn.pydata.org/",
-        f"{REPOSITORY_NAME}/doc/_build/html",
+        f"{LIBRARY_REPOSITORY}/doc/_build/html",
         *session.posargs,
     )
     # As of 3.0.0, doc2dash does not support 2x icons
@@ -149,19 +151,17 @@ def _make_branch_name(session: Session) -> str:
 @nox.session
 def fork(session: Session) -> None:
     """Fork Dash user contributed docsets and create new branch."""
-    user_contributed_repo_owner = "Kapeli"
-    user_contributed_repo = "Dash-User-Contributions"
     session.run(
         "gh",
         "repo",
         "fork",
         "--clone",
-        f"{user_contributed_repo_owner}/{user_contributed_repo}",
+        f"{UPSTREAM_REPOSITORY_OWNER}/{DOCSET_REPOSITORY}",
         external=True,
     )
     branch_name = _make_branch_name(session)
 
-    with session.chdir(user_contributed_repo):
+    with session.chdir(DOCSET_REPOSITORY):
         session.run(
             "git",
             "switch",
@@ -172,8 +172,8 @@ def fork(session: Session) -> None:
         session.run("git", "fetch", "upstream", external=True)
         trunk_branch_name = _get_trunk_branch_name(
             session,
-            repository_owner=user_contributed_repo_owner,
-            repository_name=user_contributed_repo,
+            repository_owner=UPSTREAM_REPOSITORY_OWNER,
+            repository_name=DOCSET_REPOSITORY,
         )
         session.run(
             "git", "reset", "--hard", f"upstream/{trunk_branch_name}", external=True
@@ -183,7 +183,7 @@ def fork(session: Session) -> None:
 @nox.session(name="create-directory")
 def create_directory(session: Session) -> None:
     """If directory for docset does not exist, create it."""
-    with session.chdir("Dash-User-Contributions"):
+    with session.chdir(DOCSET_REPOSITORY):
         docset_path = pathlib.Path("docsets", LIBRARY_NAME)
         docset_path.mkdir(exist_ok=True)
 
@@ -235,7 +235,7 @@ def fill_forms(session: Session) -> None:
         },
         "aliases": ["python", "graph", "matplotlib", "visualization", "data"],
     }
-    dash_path = pathlib.Path("Dash-User-Contributions", "docsets", LIBRARY_NAME)
+    dash_path = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
     docset_config_path = (dash_path / "docset").with_suffix(".json")
     json.dump(docset_config, docset_config_path.open("w"), indent=2)
     repo_name = "seaborn-dash2doc"
