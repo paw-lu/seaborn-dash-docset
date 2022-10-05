@@ -138,6 +138,14 @@ def _get_trunk_branch_name(
     return default_branch
 
 
+def _make_branch_name(session: Session) -> str:
+    """Create name for branch on Dash-User-Contributions repo."""
+    library_version = _get_library_version(session)
+    branch_name = f"{LIBRARY_NAME}-{library_version}"
+
+    return branch_name
+
+
 @nox.session
 def fork(session: Session) -> None:
     """Fork Dash user contributed docsets and create new branch."""
@@ -151,14 +159,14 @@ def fork(session: Session) -> None:
         f"{user_contributed_repo_owner}/{user_contributed_repo}",
         external=True,
     )
-    library_version = _get_library_version(session)
+    branch_name = _make_branch_name(session)
 
     with session.chdir(user_contributed_repo):
         session.run(
             "git",
             "switch",
             "--create",
-            f"{LIBRARY_NAME}-{library_version}",
+            branch_name,
             external=True,
         )
         session.run("git", "fetch", "upstream", external=True)
