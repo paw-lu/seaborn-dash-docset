@@ -15,6 +15,8 @@ LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
 DOCSET_REPOSITORY = "Dash-User-Contributions"
 DASH_DOCSET_PATH = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
+GITHUB_USER = "paw-lu"
+GITHUB_REPO = "seaborn-dash2doc"
 
 
 @nox.session
@@ -223,8 +225,7 @@ def fill_forms(session: Session) -> None:
     """Fill forms for Dash User Contribution docs."""
     library_version = _get_library_version(session)
     docset_author = "Paulo S. Costa"
-    docset_author_github_user = "paw-lu"
-    docset_author_url = f"https://github.com/{docset_author_github_user}"
+    docset_author_url = f"https://github.com/{GITHUB_USER}"
     docset_config = {
         "name": LIBRARY_NAME,
         "version": library_version,
@@ -238,8 +239,7 @@ def fill_forms(session: Session) -> None:
     dash_path = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
     docset_config_path = (dash_path / "docset").with_suffix(".json")
     json.dump(docset_config, docset_config_path.open("w"), indent=2)
-    repo_name = "seaborn-dash2doc"
-    repo_path = f"{docset_author_github_user}/{repo_name}"
+    repo_path = f"{GITHUB_USER}/{GITHUB_REPO}"
     readme = textwrap.dedent(
         f"""\
         # {LIBRARY_NAME}
@@ -269,7 +269,7 @@ def fill_forms(session: Session) -> None:
         ```console
         $ gh repo clone {repo_path}
 
-        $ cd {repo_name}
+        $ cd {GITHUB_REPO}
 
         $ nox --sessions clone docs icon dash
         ```
