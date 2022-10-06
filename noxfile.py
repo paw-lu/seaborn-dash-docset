@@ -67,8 +67,10 @@ def docs(session: Session) -> None:
 def icon(session: Session) -> None:
     """Create dash icon."""
     for size, file_name in (("16x16", "icon.png"), ("32x32", "icon@2x.png")):
+        # Using convert instead of magick since only the former is
+        # available by default right now in ubuntu-latest
         session.run(
-            "magick",
+            "convert",
             "seaborn/doc/_build/html/_static/logo-mark-lightbg.png",
             "-resize",
             size,
