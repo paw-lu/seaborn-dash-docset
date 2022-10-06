@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      manual_release:
+        description: "Manually trigger doc build and release."
+        required: false
+        default: false
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt pip
+          pip --version
+
+      - name: Check if there is a parent commit
+        id: check-parent-commit
+        run: |
+          echo "::set-output name=sha::$(git rev-parse --verify --quiet HEAD^)"
+
+      - name: Detect and tag new version
+        id: check-version
+        if: steps.check-parent-commit.outputs.sha
+        uses: salsify/action-detect-and-tag-new-version@v2.0.1
+        with:
+          version-command: >
+            python
+            -m
+            pip
+            install
+            --dry-run
+            --no-deps
+            --ignore-installed
+            --quiet
+            --quiet
+            --quiet
+            --report=-
+            --requirement
+            doc-requirements.txt
+            | jq
+            --raw-output
+            '.install[0].metadata.version'
+
+      - name: Upgrade pip
+        id: upgrade-pip
+        if: "${{ steps.check-version.outputs.tag || (github.event_name == 'workflow_dispatch' && github.event.inputs.manual_release) }}"
+        run: |
+          python -m pip install --constraint=.github/workflows/constraints.txt pip
+          python -m pip --version
+
+      - name: Install Nox
+        id: install-nox
+        if: ${{ steps.upgrade-pip.conclusion == 'success' }}
+        run: |
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
+          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          nox --version
+
+      - name: Run nox
+        if: ${{ steps.install-nox.conclusion == 'success' }}
+        run: |
+          nox
