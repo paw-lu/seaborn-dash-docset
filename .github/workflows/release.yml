@@ -71,7 +71,6 @@ jobs:
         if: ${{ steps.upgrade-pip.conclusion == 'success' }}
         run: |
           pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
       - name: Run nox
