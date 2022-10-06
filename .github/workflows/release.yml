@@ -76,5 +76,7 @@ jobs:
 
       - name: Run nox
         if: ${{ steps.install-nox.conclusion == 'success' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           nox
