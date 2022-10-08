@@ -47,20 +47,26 @@ def clone(session: Session) -> None:
         )
 
 
-@nox.session
+@nox.session()
 def docs(session: Session) -> None:
     """Build seaborn's docs."""
     with session.chdir(LIBRARY_REPOSITORY):
-        session.install(".[stats]")
-
-    with session.chdir(f"{LIBRARY_REPOSITORY}/doc"):
-        kernel_name = f"{LIBRARY_NAME}_docs"
-        session.install("--requirement", "requirements.txt")
+        session.install(".[stats]", "--requirement=ci/utils.txt")
+        session.install("--requirement=doc/requirements.txt")
+        mpl_backend_env = {"MPLBACKEND": "Agg"}
         session.run(
-            "python", "-m", "ipykernel", "install", "--user", f"--name={kernel_name}"
+            "make",
+            "--directory=doc",
+            "notebooks",
+            external=True,
+            env={"NB_KERNEL": "python", **mpl_backend_env},
         )
         session.run(
-            "make", "notebooks", "html", external=True, env={"NB_KERNEL": kernel_name}
+            "make",
+            "--directory=doc",
+            "html",
+            external=True,
+            env=mpl_backend_env,
         )
 
 
