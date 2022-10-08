@@ -10,6 +10,7 @@ import nox
 from nox.sessions import Session
 
 nox.needs_version = ">= 2021.6.6"
+nox.options.stop_on_first_error = True
 LIBRARY_REPOSITORY = "seaborn"
 LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
