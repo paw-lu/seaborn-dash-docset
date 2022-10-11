@@ -51,7 +51,11 @@ def clone(session: Session) -> None:
 def docs(session: Session) -> None:
     """Build seaborn's docs."""
     with session.chdir(LIBRARY_REPOSITORY):
-        session.install(".[stats]", "--requirement=ci/utils.txt")
+        session.install(
+            ".[stats]",
+            "--requirement=ci/utils.txt",
+            "--constraint=../constraints.txt",
+        )
         session.install("--requirement=doc/requirements.txt")
         mpl_backend_env = {"MPLBACKEND": "Agg"}
         session.run(
