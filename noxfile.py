@@ -1,4 +1,5 @@
 """Nox sessions."""
+import functools
 import json
 import os
 import pathlib
@@ -19,8 +20,14 @@ DASH_DOCSET_PATH = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
 GITHUB_USER = "paw-lu"
 GITHUB_REPO = "seaborn-dash2doc"
 
+# This is necessary to make nox run on specified python
+# Follow https://github.com/wntrblm/nox/issues/623 to see if it
+# eventually changes
+python_session = functools.partial(nox.session, python="3.10")
+non_python_session = functools.partial(nox.session, python=False)
 
-@nox.session
+
+@non_python_session(tags=["build"])
 def clone(session: Session) -> None:
     """Clone the repository and checkout latest release."""
     repository_owner = "mwaskom"
@@ -47,7 +54,7 @@ def clone(session: Session) -> None:
         )
 
 
-@nox.session()
+@python_session(tags=["build"])
 def docs(session: Session) -> None:
     """Build seaborn's docs."""
     with session.chdir(LIBRARY_REPOSITORY):
@@ -74,7 +81,7 @@ def docs(session: Session) -> None:
         )
 
 
-@nox.session
+@non_python_session(tags=["build"])
 def icon(session: Session) -> None:
     """Create dash icon."""
     for size, file_name in (("16x16", "icon.png"), ("32x32", "icon@2x.png")):
@@ -90,7 +97,7 @@ def icon(session: Session) -> None:
         )
 
 
-@nox.session
+@python_session(tags=["build"])
 def dash(session: Session) -> None:
     """Create dash docset."""
     session.install("doc2dash")
@@ -163,7 +170,7 @@ def _make_branch_name(session: Session) -> str:
     return branch_name
 
 
-@nox.session
+@non_python_session(tags=["contribute"])
 def fork(session: Session) -> None:
     """Fork Dash user contributed docsets and create new branch."""
     session.run(
@@ -195,7 +202,7 @@ def fork(session: Session) -> None:
         )
 
 
-@nox.session(name="create-directory")
+@non_python_session(name="create-directory", tags=["contribute"])
 def create_directory(session: Session) -> None:
     """If directory for docset does not exist, create it."""
     with session.chdir(DOCSET_REPOSITORY):
@@ -203,7 +210,7 @@ def create_directory(session: Session) -> None:
         docset_path.mkdir(exist_ok=True)
 
 
-@nox.session(name="remove-old")
+@non_python_session(name="remove-old", tags=["contribute"])
 def remove_old(session: Session) -> None:
     """Remove old docsets."""
     shutil.rmtree(DASH_DOCSET_PATH / "versions")
@@ -212,7 +219,7 @@ def remove_old(session: Session) -> None:
         old_zipped_docset.unlink()
 
 
-@nox.session(name="copy-contents")
+@non_python_session(name="copy-contents", tags=["contribute"])
 def copy_contents(session: Session) -> None:
     """Copy build docset contents into Dash User Contributions repo."""
     build_path = pathlib.Path(f"{LIBRARY_NAME}.docset")
@@ -233,7 +240,7 @@ def copy_contents(session: Session) -> None:
     )
 
 
-@nox.session(name="fill-forms")
+@non_python_session(name="fill-forms", tags=["contribute"])
 def fill_forms(session: Session) -> None:
     """Fill forms for Dash User Contribution docs."""
     library_version = _get_library_version(session)
@@ -291,7 +298,7 @@ def fill_forms(session: Session) -> None:
     (dash_path / "README").with_suffix(".md").write_text(readme)
 
 
-@nox.session
+@non_python_session(tags=["contribute"])
 def commit(session: Session) -> None:
     """Commit changes to Dash User Contributed Docs."""
     library_version = _get_library_version(session)
@@ -306,14 +313,14 @@ def commit(session: Session) -> None:
         )
 
 
-@nox.session
+@non_python_session(tags=["contribute"])
 def push(session: Session) -> None:
     """Push the branch to the user's remote."""
     branch_name = _make_branch_name(session)
     session.run("git", "push", "--set-upstream", "origin", branch_name)
 
 
-@nox.session(name="pull-request")
+@non_python_session(name="pull-request", tags=["contribute"])
 def pull_request(session: Session) -> None:
     """Create a pull request for the Dash User Contributed Docs."""
     library_version = _get_library_version(session)
