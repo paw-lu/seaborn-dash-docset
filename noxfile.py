@@ -116,6 +116,7 @@ def dash(session: Session) -> None:
     shutil.copy("icon@2x.png", f"{LIBRARY_NAME}.docset/")
 
 
+@functools.lru_cache
 def _get_library_version(session: Session) -> str:
     """Get the version for the library."""
     with tempfile.NamedTemporaryFile() as dependency_report_file:
@@ -147,6 +148,7 @@ def _get_library_version(session: Session) -> str:
     return library_version
 
 
+@functools.lru_cache
 def _get_trunk_branch_name(
     session: Session, repository_owner: str, repository_name: str
 ) -> str:
@@ -164,6 +166,7 @@ def _get_trunk_branch_name(
     return default_branch
 
 
+@functools.lru_cache
 def _make_branch_name(session: Session) -> str:
     """Create name for branch on Dash-User-Contributions repo."""
     library_version = _get_library_version(session)
@@ -204,7 +207,7 @@ def fork(session: Session) -> None:
         )
 
 
-@functools.cache
+@functools.lru_cache
 def _get_dash_docset_path() -> Path:
     """Get the name for the directory in the docset."""
     docset_directory = pathlib.Path(DOCSET_REPOSITORY, "docsets")
