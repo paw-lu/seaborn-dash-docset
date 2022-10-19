@@ -12,6 +12,7 @@ from nox.sessions import Session
 
 nox.needs_version = ">= 2021.6.6"
 nox.options.stop_on_first_error = True
+
 LIBRARY_REPOSITORY = "seaborn"
 LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
@@ -58,26 +59,27 @@ def clone(session: Session) -> None:
 def docs(session: Session) -> None:
     """Build seaborn's docs."""
     with session.chdir(LIBRARY_REPOSITORY):
-        session.install(
-            ".[stats]",
-            "--requirement=ci/utils.txt",
-            "--constraint=../constraints.txt",
-        )
-        session.install("--requirement=doc/requirements.txt")
-        mpl_backend_env = {"MPLBACKEND": "Agg"}
+        session.install(".[stats,docs]")
+
+    seaborn_data_repo = "seaborn-data"
+    session.run("gh", "repo", "clone", f"mwaskom/{seaborn_data_repo}", external=True)
+
+    with session.chdir(pathlib.Path(LIBRARY_REPOSITORY) / "doc"):
+        seaborn_docs_env = {
+            "MPLBACKEND": "Agg",
+            "SEABORN_DATA": pathlib.Path(__file__).parent / seaborn_data_repo,
+        }
         session.run(
             "make",
-            "--directory=doc",
             "notebooks",
             external=True,
-            env={"NB_KERNEL": "python", **mpl_backend_env},
+            env={"NB_KERNEL": "python", **seaborn_docs_env},
         )
         session.run(
             "make",
-            "--directory=doc",
             "html",
             external=True,
-            env=mpl_backend_env,
+            env=seaborn_docs_env,
         )
 
 
