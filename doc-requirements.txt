@@ -1,1 +1,1 @@
-seaborn==0.12.0
+seaborn==0.12.1
