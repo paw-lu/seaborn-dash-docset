@@ -6,6 +6,7 @@ import pathlib
 import shutil
 import tempfile
 import textwrap
+from pathlib import Path
 
 import nox
 from nox.sessions import Session
@@ -17,7 +18,6 @@ LIBRARY_REPOSITORY = "seaborn"
 LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
 DOCSET_REPOSITORY = "Dash-User-Contributions"
-DASH_DOCSET_PATH = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
 GITHUB_USER = "paw-lu"
 GITHUB_REPO = "seaborn-dash2doc"
 
@@ -204,6 +204,26 @@ def fork(session: Session) -> None:
         )
 
 
+@functools.cache
+def _get_dash_docset_path() -> Path:
+    """Get the name for the directory in the docset."""
+    docset_directory = pathlib.Path(DOCSET_REPOSITORY, "docsets")
+
+    for library_docset_path in docset_directory.iterdir():
+        lowered_library_name = LIBRARY_NAME.lower()
+
+        if (
+            library_docset_path.is_dir()
+            and lowered_library_name == library_docset_path.name.lower()
+        ):
+
+            return library_docset_path
+
+    else:
+
+        return docset_directory / LIBRARY_NAME
+
+
 @non_python_session(name="create-directory", tags=["contribute"])
 def create_directory(session: Session) -> None:
     """If directory for docset does not exist, create it."""
@@ -215,9 +235,12 @@ def create_directory(session: Session) -> None:
 @non_python_session(name="remove-old", tags=["contribute"])
 def remove_old(session: Session) -> None:
     """Remove old docsets."""
-    shutil.rmtree(DASH_DOCSET_PATH / "versions")
+    dash_docset_path = _get_dash_docset_path()
 
-    for old_zipped_docset in DASH_DOCSET_PATH.glob("*.tgz*"):
+    if (versions_path := dash_docset_path / "versions").exists():
+        shutil.rmtree(versions_path)
+
+    for old_zipped_docset in dash_docset_path.glob("*.tgz*"):
         old_zipped_docset.unlink()
 
 
@@ -225,12 +248,13 @@ def remove_old(session: Session) -> None:
 def copy_contents(session: Session) -> None:
     """Copy build docset contents into Dash User Contributions repo."""
     build_path = pathlib.Path(f"{LIBRARY_NAME}.docset")
+    dash_docset_path = _get_dash_docset_path()
 
     for icon_path in build_path.glob("icon*.png"):
-        shutil.copy(icon_path, DASH_DOCSET_PATH)
+        shutil.copy(icon_path, dash_docset_path)
 
     zipped_docset_path = os.fsdecode(
-        (DASH_DOCSET_PATH / LIBRARY_NAME).with_suffix(".tgz")
+        (dash_docset_path / LIBRARY_NAME).with_suffix(".tgz")
     )
     session.run(
         "tar",
@@ -304,8 +328,9 @@ def fill_forms(session: Session) -> None:
 def commit(session: Session) -> None:
     """Commit changes to Dash User Contributed Docs."""
     library_version = _get_library_version(session)
+    dash_docset_path = _get_dash_docset_path()
 
-    with session.chdir(DASH_DOCSET_PATH):
+    with session.chdir(dash_docset_path):
         session.run("git", "add", ".", external=True)
         session.run(
             "git",
@@ -326,8 +351,9 @@ def push(session: Session) -> None:
 def pull_request(session: Session) -> None:
     """Create a pull request for the Dash User Contributed Docs."""
     library_version = _get_library_version(session)
+    dash_docset_path = _get_dash_docset_path()
 
-    with session.chdir(DASH_DOCSET_PATH):
+    with session.chdir(dash_docset_path):
         trunk_brach_name = _get_trunk_branch_name(
             session,
             repository_owner=UPSTREAM_REPOSITORY_OWNER,
