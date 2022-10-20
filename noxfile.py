@@ -338,9 +338,8 @@ def fill_forms(session: Session) -> None:
 def commit(session: Session) -> None:
     """Commit changes to Dash User Contributed Docs."""
     library_version = _get_library_version(session)
-    dash_docset_path = _get_dash_docset_path()
 
-    with session.chdir(dash_docset_path):
+    with session.chdir(DOCSET_REPOSITORY):
         session.run("git", "add", ".", external=True)
         session.run(
             "git",
@@ -354,7 +353,9 @@ def commit(session: Session) -> None:
 def push(session: Session) -> None:
     """Push the branch to the user's remote."""
     branch_name = _make_branch_name(session)
-    session.run("git", "push", "--set-upstream", "origin", branch_name)
+
+    with session.chdir(DOCSET_REPOSITORY):
+        session.run("git", "push", "--set-upstream", "origin", branch_name)
 
 
 @nox.session(python=PYTHON, name="pull-request", tags=["contribute"])
