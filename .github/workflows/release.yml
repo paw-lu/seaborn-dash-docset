@@ -88,8 +88,15 @@ jobs:
         with:
           pandoc-version: "2.17.1"
 
+      - name: Setup git
+        id: setup-git
+        if: ${{ steps.setup-pandoc.conclusion == 'success' }}
+        run: |
+          git config --global user.name "cookiecutter-dash-docset"
+          git config --global user.email "cookiecutter.dash.docset@users.noreply.github.com"
+
       - name: Run nox
-        if: ${{ steps.setup-nox.conclusion == 'success' }}
+        if: ${{ steps.setup-git.conclusion == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
