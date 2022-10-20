@@ -74,22 +74,22 @@ jobs:
           python -m pip install --constraint=.github/workflows/constraints.txt pip
           python -m pip --version
 
-      - name: Install Nox
-        id: install-nox
+      - name: Setup Nox
+        id: setup-nox
         if: ${{ steps.upgrade-pip.conclusion == 'success' }}
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          nox --version
+        uses: wntrblm/nox@2022.8.7
+        with:
+          python-versions: "3.10"
 
       - name: Setup pandoc
         id: setup-pandoc
-        if: ${{ steps.install-nox.conclusion == 'success' }}
+        if: ${{ steps.setup-nox.conclusion == 'success' }}
         uses: r-lib/actions/setup-pandoc@v2
         with:
           pandoc-version: "2.17.1"
 
       - name: Run nox
-        if: ${{ steps.install-nox.conclusion == 'success' }}
+        if: ${{ steps.setup-nox.conclusion == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
