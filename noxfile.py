@@ -327,7 +327,7 @@ def fill_forms(session: Session) -> None:
 
         $ cd {GITHUB_REPO}
 
-        $ nox --sessions clone docs icon dash
+        $ nox --tags build
         ```
     """
     )
