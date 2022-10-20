@@ -341,7 +341,7 @@ def commit(session: Session) -> None:
     library_version = _get_library_version(session)
 
     with session.chdir(DOCSET_REPOSITORY):
-        session.run("git", "add", ".", external=True)
+        session.run("git", "add", "--all", external=True)
         session.run(
             "git",
             "commit",
