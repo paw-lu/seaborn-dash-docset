@@ -398,3 +398,10 @@ def check_types(session: Session) -> None:
     """Check typing with mypy."""
     session.install("mypy", "nox", "--constraint=.github/workflows/constraints.txt")
     session.run("mypy", "noxfile.py")
+
+
+@nox.session(python=PYTHON)
+def version(session: Session) -> None:
+    """Print the doc version."""
+    library_version = _get_library_version(session)
+    print(library_version)
