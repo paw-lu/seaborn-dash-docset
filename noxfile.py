@@ -363,7 +363,7 @@ def pull_request(session: Session) -> None:
     dash_docset_path = _get_dash_docset_path()
 
     with session.chdir(dash_docset_path):
-        trunk_brach_name = _get_trunk_branch_name(
+        trunk_branch_name = _get_trunk_branch_name(
             session,
             repository_owner=UPSTREAM_REPOSITORY_OWNER,
             repository_name=DOCSET_REPOSITORY,
@@ -383,7 +383,7 @@ def pull_request(session: Session) -> None:
             "pr",
             "create",
             f"--repo={UPSTREAM_REPOSITORY_OWNER}/{DOCSET_REPOSITORY}",
-            f"--base={trunk_brach_name}",
+            f"--base={trunk_branch_name}",
             f"--title={pull_request_title}",
             f"--body={pull_request_body}",
             # Need to specify head for now
