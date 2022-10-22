@@ -95,12 +95,21 @@ jobs:
           git config --global user.name "cookiecutter-dash-docset"
           git config --global user.email "cookiecutter.dash.docset@users.noreply.github.com"
 
-      - name: Run nox
+      - name: Build docs
+        id: build-docs
         if: ${{ steps.setup-git.conclusion == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          nox
+          nox --tags build
+
+      - name: Contribute docs
+        id: contribute-docs
+        if: ${{ steps.build-docs.conclusion == 'success' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          nox --tags contribute
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
