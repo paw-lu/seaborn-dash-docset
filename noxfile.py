@@ -191,6 +191,7 @@ def fork(session: Session) -> None:
         "fork",
         "--clone",
         f"{UPSTREAM_REPOSITORY_OWNER}/{DOCSET_REPOSITORY}",
+        "--remote",
         external=True,
     )
     branch_name = _make_branch_name(session)
