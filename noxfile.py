@@ -347,7 +347,7 @@ def commit(session: Session) -> None:
         )
 
 
-@nox.session(python=False, tags=["contribute"])
+@nox.session(python=PYTHON, tags=["contribute"])
 def push(session: Session) -> None:
     """Push the branch to the user's remote."""
     branch_name = _make_branch_name(session)
