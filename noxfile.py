@@ -123,11 +123,7 @@ def dash(session: Session) -> None:
 def _get_library_version(session: Session) -> str:
     """Get the version for the library."""
     with tempfile.NamedTemporaryFile() as dependency_report_file:
-        session.run(
-            "python",
-            "-m",
-            "pip",
-            "install",
+        session.install(
             "--dry-run",
             "--no-deps",
             "--ignore-installed",
