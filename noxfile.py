@@ -388,7 +388,7 @@ def pull_request(session: Session) -> None:
             f"--body={pull_request_body}",
             # Need to specify head for now
             # https://github.com/cli/cli/issues/6485#event-7645956185
-            f"--head={branch_name}",
+            f"--head={GITHUB_USER}:{branch_name}",
             external=True,
         )
 
