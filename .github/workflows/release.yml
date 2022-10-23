@@ -1,9 +1,8 @@
-name: Release
+name: Build docs
 
 on:
   push:
-    branches:
-      - main
+  pull_request:
   workflow_dispatch:
     inputs:
       manual_release:
@@ -17,7 +16,7 @@ on:
 
 jobs:
   release:
-    name: Release
+    name: Build docs
     runs-on: ubuntu-latest
 
     env:
@@ -39,16 +38,29 @@ jobs:
           python -m pip install --constraint=.github/workflows/constraints.txt pip
           python -m pip --version
 
-      - name: Check if there is a parent commit
-        id: check-parent-commit
-        run: |
-          echo "::set-output name=sha::$(git rev-parse --verify --quiet HEAD^)"
-
       - name: Setup Nox
         id: setup-nox
         uses: wntrblm/nox@2022.8.7
         with:
           python-versions: "3.10"
+
+      - name: Setup pandoc
+        id: setup-pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+        with:
+          pandoc-version: "2.17.1"
+
+      - name: Build docs
+        id: build-docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          nox --tags build
+
+      - name: Check if there is a parent commit
+        id: check-parent-commit
+        run: |
+          echo "::set-output name=sha::$(git rev-parse --verify --quiet HEAD^)"
 
       - name: Detect and tag new version
         id: check-version
@@ -58,31 +70,23 @@ jobs:
           version-command: |
             nox --session version | tail -n 1
 
-      - name: Setup pandoc
-        id: setup-pandoc
-        if: "${{ steps.check-version.outputs.tag || (github.event_name == 'workflow_dispatch' && github.event.inputs.manual_release) }}"
-        uses: r-lib/actions/setup-pandoc@v2
-        with:
-          pandoc-version: "2.17.1"
-
       - name: Setup git
         id: setup-git
-        if: ${{ steps.setup-pandoc.conclusion == 'success' }}
+        if: ${{ steps.check-version.conclusion == 'success' }}
         run: |
           git config --global user.name "cookiecutter-dash-docset"
           git config --global user.email "cookiecutter.dash.docset@users.noreply.github.com"
 
-      - name: Build docs
-        id: build-docs
-        if: ${{ steps.setup-git.conclusion == 'success' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          nox --tags build
-
       - name: Contribute docs
         id: contribute-docs
-        if: ${{ steps.build-docs.conclusion == 'success' }}
+        if: ${{ (steps.check-version.conclusion == 'success'
+          && github.event_name == 'push'
+          && github.ref_name == 'main'
+          )||
+          (
+          github.event_name == 'workflow_dispatch'
+          && github.event.inputs.manual_release
+          ) }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
