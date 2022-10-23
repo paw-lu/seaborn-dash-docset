@@ -118,7 +118,7 @@ def icon(session: Session) -> None:
 @nox.session(python=PYTHON, tags=["build"])
 def dash(session: Session) -> None:
     """Create dash docset."""
-    session.install("doc2dash")
+    session.install("doc2dash", "--constraint=.github/workflows/constraints.txt")
     session.run(
         "doc2dash",
         "--index-page=index.html",
