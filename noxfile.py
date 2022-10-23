@@ -104,6 +104,12 @@ def icon(session: Session) -> None:
             "seaborn/doc/_build/html/_static/logo-mark-lightbg.png",
             "-resize",
             size,
+            "-background",
+            "none",
+            "-gravity",
+            "center",
+            "-extent",
+            size,
             file_name,
             external=True,
         )
