@@ -56,6 +56,9 @@ def clone(session: Session) -> None:
                 external=True,
             )
 
+        else:
+            raise ValueError("Did not find a tag name for the latest release")
+
 
 @nox.session(python=PYTHON, tags=["build"])
 def docs(session: Session) -> None:
