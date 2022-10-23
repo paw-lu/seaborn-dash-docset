@@ -20,7 +20,7 @@ LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
 DOCSET_REPOSITORY = "Dash-User-Contributions"
 GITHUB_USER = "paw-lu"
-GITHUB_REPO = "seaborn-dash2doc"
+GITHUB_REPO = "seaborn-dash-docset"
 # This is necessary to make nox run on specified python
 # Follow https://github.com/wntrblm/nox/issues/623 to see if it
 # eventually changes
