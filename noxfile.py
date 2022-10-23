@@ -316,7 +316,7 @@ def fill_forms(session: Session) -> None:
         "archive": f"{LIBRARY_NAME}.tgz",
         "author": {
             "name": docset_author,
-            "url": docset_author_url,
+            "link": docset_author_url,
         },
         "aliases": ["python", "graph", "matplotlib", "visualization", "data"],
     }
