@@ -72,14 +72,14 @@ jobs:
 
       - name: Setup git
         id: setup-git
-        if: ${{ steps.check-version.conclusion == 'success' }}
+        if: ${{ steps.check-version.outputs.tag }}
         run: |
           git config --global user.name "cookiecutter-dash-docset"
           git config --global user.email "cookiecutter.dash.docset@users.noreply.github.com"
 
       - name: Contribute docs
         id: contribute-docs
-        if: ${{ (steps.check-version.conclusion == 'success'
+        if: ${{ (steps.check-version.outputs.tag
           && github.event_name == 'push'
           && github.ref_name == 'main'
           )||
