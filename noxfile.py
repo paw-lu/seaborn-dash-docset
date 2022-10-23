@@ -59,7 +59,13 @@ def clone(session: Session) -> None:
 
 @nox.session(python=PYTHON, tags=["build"])
 def docs(session: Session) -> None:
-    """Build seaborn's docs."""
+    """Build seaborn's docs.
+
+    Based on code in https://github.com/mwaskom/seaborn/blob
+    /df31a75de8ea054e74e98cf6f5cd43be5f6a3db1/.github/workflows/ci.yaml
+    and documentation in https://github.com/mwaskom/seaborn/blob
+    /df31a75de8ea054e74e98cf6f5cd43be5f6a3db1/doc/README.md
+    """
     with session.chdir(LIBRARY_REPOSITORY):
         session.install(".[stats,docs]")
 
