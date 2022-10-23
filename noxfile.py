@@ -243,9 +243,14 @@ def fork(session: Session) -> None:
             origin_url = session.run(
                 "git", "remote", "get-url", "origin", silent=True, external=True
             )
-            token_url = _add_github_token(origin_url, github_token=github_token)
-            session.run("git", "remote", "remove", "origin", external=True)
-            session.run("git", "remote", "add", "origin", token_url, external=True)
+
+            if isinstance(origin_url, str):
+                token_url = _add_github_token(origin_url, github_token=github_token)
+                session.run("git", "remote", "remove", "origin", external=True)
+                session.run("git", "remote", "add", "origin", token_url, external=True)
+
+            else:
+                raise ValueError("No url for remote 'origin' detected.")
 
 
 @functools.lru_cache
