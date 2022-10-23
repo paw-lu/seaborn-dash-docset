@@ -80,17 +80,9 @@ jobs:
         run: |
           nox --tags build
 
-      - name: Rename origin
-        id: rename-origin
-        working-directory: ./Dash-User-Contributions
-        if: ${{ steps.build-docs.conclusion == 'success' }}
-        run: |
-          git remote remove origin
-          git remote add origin https://${{ secrets.GH_TOKEN }}@github.com/${{ github.actor }}/Dash-User-Contributions
-
       - name: Contribute docs
         id: contribute-docs
-        if: ${{ steps.rename-origin.conclusion == 'success' }}
+        if: ${{ steps.build-docs.conclusion == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |

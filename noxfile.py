@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import textwrap
 from pathlib import Path
+from urllib import parse
 
 import nox
 from nox.sessions import Session
@@ -178,6 +179,19 @@ def _make_branch_name(session: Session) -> str:
     return branch_name
 
 
+def _add_github_token(repo_url: str, github_token: str) -> str:
+    """Add a GitHub token to a repository URL.
+
+    Needed to authenticate pushes to other repositories on GitHub
+    Actions.
+    """
+    split_url = parse.urlsplit(repo_url)
+    token_netloc = f"{github_token}@{split_url.netloc}"
+    token_url = split_url._replace(netloc=token_netloc).geturl()
+
+    return token_url
+
+
 @nox.session(python=PYTHON, tags=["contribute"])
 def fork(session: Session) -> None:
     """Fork Dash user contributed docsets and create new branch."""
@@ -209,6 +223,17 @@ def fork(session: Session) -> None:
         session.run(
             "git", "reset", "--hard", f"upstream/{trunk_branch_name}", external=True
         )
+
+        if (
+            os.environ.get("GITHUB_ACTION") == "contribute-docs"
+            and (github_token := os.environ.get("GITHUB_TOKEN")) is not None
+        ):
+            origin_url = session.run(
+                "git", "remote", "get-url", "origin", silent=True, external=True
+            )
+            token_url = _add_github_token(origin_url, github_token=github_token)
+            session.run("git", "remote", "remove", "origin", external=True)
+            session.run("git", "remote", "add", "origin", token_url, external=True)
 
 
 @functools.lru_cache
