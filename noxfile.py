@@ -378,7 +378,9 @@ def push(session: Session) -> None:
     branch_name = _make_branch_name(session)
 
     with session.chdir(DOCSET_REPOSITORY):
-        session.run("git", "push", "--set-upstream", "origin", branch_name)
+        session.run(
+            "git", "push", "--set-upstream", "origin", branch_name, external=True
+        )
 
 
 @nox.session(python=PYTHON, name="pull-request", tags=["contribute"])
