@@ -52,8 +52,6 @@ jobs:
 
       - name: Build docs
         id: build-docs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           nox --tags build
 

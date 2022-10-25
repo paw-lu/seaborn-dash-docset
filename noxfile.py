@@ -15,6 +15,7 @@ from nox.sessions import Session
 nox.needs_version = ">= 2021.6.6"
 nox.options.stop_on_first_error = True
 
+CONSTRAINTS_ARG = "--constraint=.github/workflows/constraints.txt"
 LIBRARY_REPOSITORY = "seaborn"
 LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
@@ -27,32 +28,32 @@ GITHUB_REPO = "seaborn-dash-docset"
 PYTHON = "3.10"
 
 
-@nox.session(python=False, tags=["build"])
+@nox.session(python=PYTHON, tags=["build"])
 def clone(session: Session) -> None:
     """Clone the repository and checkout latest release."""
     repository_owner = "mwaskom"
     repository_address = f"{repository_owner}/{LIBRARY_REPOSITORY}"
-    session.run("gh", "repo", "clone", repository_address, external=True)
+    session.run(
+        "git", "clone", f"https://github.com/{repository_address}.git", external=True
+    )
+    session.install("httpie", CONSTRAINTS_ARG)
 
     with session.chdir(LIBRARY_REPOSITORY):
-        latest_release_tag_name = session.run(
-            "gh",
-            "api",
-            "--header=Accept: application/vnd.github+json",
-            "/repos/mwaskom/seaborn/releases/latest",
-            "--jq=.tag_name",
-            external=True,
+        latest_release_api_data = session.run(
+            "http",
+            f"https://api.github.com/repos/{repository_address}/releases/latest",
+            "Accept:application/vnd.github+json",
             silent=True,
         )
 
-        if isinstance(latest_release_tag_name, str):
-            stripped_tag_name = latest_release_tag_name.rstrip()
+        if isinstance(latest_release_api_data, str):
+            latest_release_tag_name = json.loads(latest_release_api_data)["tag_name"]
             session.run(
                 "git",
                 "checkout",
-                f"tags/{stripped_tag_name}",
+                f"tags/{latest_release_tag_name}",
                 "-b",
-                stripped_tag_name,
+                latest_release_tag_name,
                 external=True,
             )
 
@@ -73,7 +74,12 @@ def docs(session: Session) -> None:
         session.install(".[stats,docs]")
 
     seaborn_data_repo = "seaborn-data"
-    session.run("gh", "repo", "clone", f"mwaskom/{seaborn_data_repo}", external=True)
+    session.run(
+        "git",
+        "clone",
+        f"https://github.com/mwaskom/{seaborn_data_repo}.git",
+        external=True,
+    )
 
     with session.chdir(pathlib.Path(LIBRARY_REPOSITORY) / "doc"):
         seaborn_docs_env = {
@@ -121,7 +127,7 @@ def icon(session: Session) -> None:
 @nox.session(python=PYTHON, tags=["build"])
 def dash(session: Session) -> None:
     """Create dash docset."""
-    session.install("doc2dash", "--constraint=.github/workflows/constraints.txt")
+    session.install("doc2dash", CONSTRAINTS_ARG)
     session.run(
         "doc2dash",
         "--index-page=index.html",
@@ -442,7 +448,7 @@ def pull_request(session: Session) -> None:
 @nox.session(python=PYTHON, name="check-types", tags=["lint"])
 def check_types(session: Session) -> None:
     """Check typing with mypy."""
-    session.install("mypy", "nox", "--constraint=.github/workflows/constraints.txt")
+    session.install("mypy", "nox", CONSTRAINTS_ARG)
     session.run("mypy", "noxfile.py")
 
 
