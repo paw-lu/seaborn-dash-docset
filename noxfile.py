@@ -279,9 +279,8 @@ def _get_dash_docset_path() -> Path:
 @nox.session(python=False, name="create-directory", tags=["contribute"])
 def create_directory(session: Session) -> None:
     """If directory for docset does not exist, create it."""
-    with session.chdir(DOCSET_REPOSITORY):
-        docset_path = pathlib.Path("docsets", LIBRARY_NAME)
-        docset_path.mkdir(exist_ok=True)
+    docset_path = _get_dash_docset_path()
+    docset_path.mkdir(exist_ok=True)
 
 
 @nox.session(python=False, name="remove-old", tags=["contribute"])
