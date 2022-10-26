@@ -59,6 +59,8 @@ jobs:
 
       - name: Check if there is a parent commit
         id: check-parent-commit
+        if: ${{ github.event_name == 'push'
+          && github.ref_name == 'main' }}
         run: |
           echo "::set-output name=sha::$(git rev-parse --verify --quiet HEAD^)"
 
