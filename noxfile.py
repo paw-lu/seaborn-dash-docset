@@ -15,6 +15,7 @@ from nox.sessions import Session
 nox.needs_version = ">= 2021.6.6"
 nox.options.stop_on_first_error = True
 
+CONSTRAINTS_ARG = "--constraint=.github/workflows/constraints.txt"
 LIBRARY_REPOSITORY = "seaborn"
 LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
@@ -121,7 +122,7 @@ def icon(session: Session) -> None:
 @nox.session(python=PYTHON, tags=["build"])
 def dash(session: Session) -> None:
     """Create dash docset."""
-    session.install("doc2dash", "--constraint=.github/workflows/constraints.txt")
+    session.install("doc2dash", CONSTRAINTS_ARG)
     session.run(
         "doc2dash",
         "--index-page=index.html",
@@ -442,7 +443,7 @@ def pull_request(session: Session) -> None:
 @nox.session(python=PYTHON, name="check-types", tags=["lint"])
 def check_types(session: Session) -> None:
     """Check typing with mypy."""
-    session.install("mypy", "nox", "--constraint=.github/workflows/constraints.txt")
+    session.install("mypy", "nox", CONSTRAINTS_ARG)
     session.run("mypy", "noxfile.py")
 
 
