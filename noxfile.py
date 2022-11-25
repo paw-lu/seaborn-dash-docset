@@ -16,7 +16,7 @@ nox.needs_version = ">= 2021.6.6"
 nox.options.stop_on_first_error = True
 
 CONSTRAINTS_ARG = "--constraint=.github/workflows/constraints.txt"
-LIBRARY_REPOSITORY = "seaborn"
+LIBRARY_REPOSITORY = "seaborn.github.io"
 LIBRARY_NAME = "seaborn"
 UPSTREAM_REPOSITORY_OWNER = "Kapeli"
 DOCSET_REPOSITORY = "Dash-User-Contributions"
@@ -31,70 +31,46 @@ PYTHON = "3.10"
 @nox.session(python=False, tags=["build"])
 def clone(session: Session) -> None:
     """Clone the repository and checkout latest release."""
-    repository_owner = "mwaskom"
+    repository_owner = "seaborn"
     repository_address = f"{repository_owner}/{LIBRARY_REPOSITORY}"
     session.run("gh", "repo", "clone", repository_address, external=True)
 
     with session.chdir(LIBRARY_REPOSITORY):
-        latest_release_tag_name = session.run(
+        tags_api_output = session.run(
             "gh",
             "api",
             "--header=Accept: application/vnd.github+json",
-            "/repos/mwaskom/seaborn/releases/latest",
-            "--jq=.tag_name",
+            f"/repos/{repository_address}/tags",
+            "--jq=.[].name",
             external=True,
             silent=True,
         )
 
-        if isinstance(latest_release_tag_name, str):
-            stripped_tag_name = latest_release_tag_name.rstrip()
+        if isinstance(tags_api_output, str):
+            tag_names = tags_api_output.split()
+            numeric_tag_names = [
+                tag_name
+                for tag_name in tag_names
+                if tag_name.replace("v", "").replace(".", "").isnumeric()
+            ]
+            latest_tag_name = max(
+                numeric_tag_names,
+                key=lambda tag_name: tuple(
+                    int(version_section)
+                    for version_section in tag_name.replace("v", "").split(".")
+                ),
+            )
             session.run(
                 "git",
                 "checkout",
-                f"tags/{stripped_tag_name}",
+                f"tags/{latest_tag_name}",
                 "-b",
-                stripped_tag_name,
+                latest_tag_name,
                 external=True,
             )
 
         else:
             raise ValueError("Did not find a tag name for the latest release")
-
-
-@nox.session(python=PYTHON, tags=["build"])
-def docs(session: Session) -> None:
-    """Build seaborn's docs.
-
-    Based on code in https://github.com/mwaskom/seaborn/blob
-    /df31a75de8ea054e74e98cf6f5cd43be5f6a3db1/.github/workflows/ci.yaml
-    and documentation in https://github.com/mwaskom/seaborn/blob
-    /df31a75de8ea054e74e98cf6f5cd43be5f6a3db1/doc/README.md
-    """
-    with session.chdir(LIBRARY_REPOSITORY):
-        session.install(".[stats,docs]")
-
-    seaborn_data_repo = "seaborn-data"
-    session.run("gh", "repo", "clone", f"mwaskom/{seaborn_data_repo}", external=True)
-
-    with session.chdir(pathlib.Path(LIBRARY_REPOSITORY) / "doc"):
-        seaborn_docs_env = {
-            "MPLBACKEND": "Agg",
-            "SEABORN_DATA": os.fsdecode(
-                pathlib.Path(__file__).parent / seaborn_data_repo
-            ),
-        }
-        session.run(
-            "make",
-            "notebooks",
-            external=True,
-            env={"NB_KERNEL": "python", **seaborn_docs_env},
-        )
-        session.run(
-            "make",
-            "html",
-            external=True,
-            env=seaborn_docs_env,
-        )
 
 
 @nox.session(python=False, tags=["build"])
@@ -105,7 +81,7 @@ def icon(session: Session) -> None:
         # available by default right now in ubuntu-latest
         session.run(
             "convert",
-            "seaborn/doc/_build/html/_static/logo-mark-lightbg.png",
+            f"{LIBRARY_REPOSITORY}/_static/logo-mark-lightbg.png",
             "-resize",
             size,
             "-background",
@@ -119,6 +95,13 @@ def icon(session: Session) -> None:
         )
 
 
+def _get_docset_path() -> Path:
+    """Get path to created docset."""
+    docset_path = next(pathlib.Path(__file__).parent.glob("*.docset"))
+
+    return docset_path
+
+
 @nox.session(python=PYTHON, tags=["build"])
 def dash(session: Session) -> None:
     """Create dash docset."""
@@ -128,12 +111,13 @@ def dash(session: Session) -> None:
         "--index-page=index.html",
         "--icon=icon.png",
         "--online-redirect-url=https://seaborn.pydata.org/",
-        f"{LIBRARY_REPOSITORY}/doc/_build/html",
+        f"{LIBRARY_REPOSITORY}",
         *session.posargs,
     )
     # As of 3.0.0, doc2dash does not support 2x icons
     # See https://github.com/hynek/doc2dash/issues/130
-    shutil.copy("icon@2x.png", f"{LIBRARY_NAME}.docset/")
+    docset_path = _get_docset_path()
+    shutil.copy("icon@2x.png", os.fsdecode(docset_path))
 
 
 @functools.lru_cache
@@ -269,11 +253,9 @@ def _get_dash_docset_path() -> Path:
             library_docset_path.is_dir()
             and lowered_library_name == library_docset_path.name.lower()
         ):
-
             return library_docset_path
 
     else:
-
         return docset_directory / LIBRARY_NAME
 
 
@@ -299,10 +281,10 @@ def remove_old(session: Session) -> None:
 @nox.session(python=False, name="copy-contents", tags=["contribute"])
 def copy_contents(session: Session) -> None:
     """Copy build docset contents into Dash User Contributions repo."""
-    build_path = pathlib.Path(f"{LIBRARY_NAME}.docset")
+    docset_path = _get_docset_path()
     dash_docset_path = _get_dash_docset_path()
 
-    for icon_path in build_path.glob("icon*.png"):
+    for icon_path in docset_path.glob("icon*.png"):
         shutil.copy(icon_path, dash_docset_path)
 
     zipped_docset_path = os.fsdecode(
@@ -313,7 +295,7 @@ def copy_contents(session: Session) -> None:
         "--exclude=.DS_Store",
         "-cvzf",
         zipped_docset_path,
-        f"{LIBRARY_NAME}.docset",
+        os.fsdecode(docset_path.name),
         external=True,
     )
 
@@ -334,7 +316,6 @@ def fill_forms(session: Session) -> None:
         },
         "aliases": ["python", "graph", "matplotlib", "visualization", "data"],
     }
-    dash_path = pathlib.Path(DOCSET_REPOSITORY, "docsets", LIBRARY_NAME)
     dash_docset_path = _get_dash_docset_path()
     docset_config_path = (dash_docset_path / "docset").with_suffix(".json")
     json.dump(docset_config, docset_config_path.open("w"), indent=2)
@@ -374,7 +355,7 @@ def fill_forms(session: Session) -> None:
         ```
     """
     )
-    (dash_path / "README").with_suffix(".md").write_text(readme)
+    (dash_docset_path / "README").with_suffix(".md").write_text(readme)
 
 
 @nox.session(python=PYTHON, tags=["contribute"])
