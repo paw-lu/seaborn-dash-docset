@@ -287,9 +287,7 @@ def copy_contents(session: Session) -> None:
     for icon_path in docset_path.glob("icon*.png"):
         shutil.copy(icon_path, dash_docset_path)
 
-    zipped_docset_path = os.fsdecode(
-        (dash_docset_path / LIBRARY_NAME).with_suffix(".tgz")
-    )
+    zipped_docset_path = f"{LIBRARY_NAME}.tgz"
     session.run(
         "tar",
         "--exclude=.DS_Store",

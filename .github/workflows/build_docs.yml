@@ -94,6 +94,13 @@ jobs:
         run: |
           nox --tags contribute
 
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: ${{ steps.contribute-docs.outcome == 'success' }}
+        with:
+          files: |
+            seaborn.tgz
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         with:
